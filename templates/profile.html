@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}{{ target.name }} · Raven HR{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">{% if view_only %}Viewing (read-only){% else %}My Profile{% endif %}</p>
+      <h1>{{ target.name }}</h1>
+    </div>
+    {% if not is_self %}<a href="{{ url_for('admin_dashboard') }}" class="btn btn--ghost">← Back to employees</a>{% endif %}
+  </div>
+
+  <div class="profile-layout">
+    <aside class="profile-card">
+      <div class="profile-card__avatar">
+        {% if target.profile_picture %}
+          <img src="{{ url_for('static', filename=target.profile_picture) }}" alt="{{ target.name }}">
+        {% else %}
+          {{ target.name[0] }}
+        {% endif %}
+        {% if not view_only %}
+          <label class="edit-badge" for="profilePictureInput" title="Change profile picture">✎</label>
+          <form id="profilePictureForm" method="POST" action="{{ url_for('update_profile_picture') }}" enctype="multipart/form-data" style="display:none;">
+            <input type="file" id="profilePictureInput" name="profile_picture" accept="image/*" onchange="document.getElementById('profilePictureForm').submit();">
+          </form>
+        {% endif %}
+      </div>
+      <h2>{{ target.name }}</h2>
+      <p class="profile-card__role">{{ target.designation }}</p>
+      <dl>
+        <dt>Login ID</dt><dd>{{ target.login_id }}</dd>
+        <dt>Email</dt><dd>{{ target.email }}</dd>
+        <dt>Mobile</dt><dd>{{ target.mobile }}</dd>
+        <dt>Company</dt><dd>Raven HR</dd>
+        <dt>Department</dt><dd>{{ target.department }}</dd>
+        <dt>Manager</dt><dd>{{ target.manager or '—' }}</dd>
+        <dt>Location</dt><dd>{{ target.location }}</dd>
+      </dl>
+
+      {% if is_self %}
+      <div class="checkinout checkinout--card">
+        {% if target.checked_in %}
+          <p class="checkinout__status"><span class="status-dot status-dot--present"></span> Since {{ target.check_in_time }}</p>
+          <button class="btn btn--outline btn--block" id="checkoutBtn">Check Out →</button>
+        {% else %}
+          <p class="checkinout__status"><span class="status-dot status-dot--absent"></span> Not checked in</p>
+          <button class="btn btn--primary btn--block" id="checkinBtn">Check In →</button>
+        {% endif %}
+      </div>
+      {% endif %}
+    </aside>
+
+    <div class="profile-main">
+      <div class="tabs" id="profileTabs">
+        <button class="tab is-active" data-tab="private">Private Info</button>
+        {% if show_salary_tab %}<button class="tab" data-tab="salary">Salary Info</button>{% endif %}
+        <button class="tab" data-tab="security">Security</button>
+      </div>
+
+      <div class="tab-panel is-active" data-panel="private">
+        <div class="field-grid">
+          <div><label>Date of Birth</label><p>{{ target.date_of_birth }}</p></div>
+          <div><label>Gender</label><p>{{ target.gender }}</p></div>
+          <div><label>Marital Status</label><p>{{ target.marital_status }}</p></div>
+          <div><label>Date of Joining</label><p>{{ target.date_of_joining }}</p></div>
+          <div><label>Reporting Address</label><p>{{ target.reporting_address }}</p></div>
+          <div><label>Nationality</label><p>{{ target.nationality }}</p></div>
+          <div><label>Personal Email</label><p>{{ target.personal_email }}</p></div>
+        </div>
+        <h3>Bank Details</h3>
+        <div class="field-grid">
+          <div><label>Bank</label><p>{{ target.bank_name }}</p></div>
+          <div><label>Account Number</label><p>{{ target.account_number }}</p></div>
+          <div><label>IFSC Code</label><p>{{ target.ifsc_code }}</p></div>
+          <div><label>PAN</label><p>{{ target.pan }}</p></div>
+          <div><label>UAN ID</label><p>{{ target.uan_id }}</p></div>
+          <div><label>ESIC Code</label><p>{{ target.esic_code }}</p></div>
+        </div>
+        <h3>About</h3>
+        <p class="about-text">{{ target.about }}</p>
+      </div>
+
+      {% if show_salary_tab %}
+      <div class="tab-panel" data-panel="salary">
+        {% if not is_self %}
+        <form class="salary-edit-form" method="POST" action="{{ url_for('update_salary', emp_id=target.id) }}">
+          <label>
+            Monthly Wage (₹)
+            <input type="number" name="wage_monthly" min="0" step="1" value="{{ target.wage_monthly }}" required>
+          </label>
+          <label>
+            Working days / week
+            <input type="number" name="working_days_per_week" min="1" max="7" step="1" value="{{ target.working_days_per_week }}" required>
+          </label>
+          <label>
+            Working hours / day
+            <input type="number" name="working_hours" min="1" max="24" step="0.5" value="{{ target.working_hours }}" required>
+          </label>
+          <button type="submit" class="btn btn--primary">Save changes</button>
+        </form>
+        {% endif %}
+
+        <div class="salary-head">
+          <div>
+            <label>Monthly Wage</label>
+            <p class="salary-figure">₹{{ '{:,.0f}'.format(target.wage_monthly) }} <span>/ month</span></p>
+          </div>
+          <div>
+            <label>Yearly Wage</label>
+            <p class="salary-figure">₹{{ '{:,.0f}'.format(salary.yearly_wage) }} <span>/ year</span></p>
+          </div>
+          <div>
+            <label>Working days / week</label>
+            <p class="salary-figure">{{ target.working_days_per_week }} <span>days</span></p>
+          </div>
+          <div>
+            <label>Working hours</label>
+            <p class="salary-figure">{{ target.working_hours }} <span>hrs/day</span></p>
+          </div>
+        </div>
+
+        <h3>Salary Components</h3>
+        <table class="salary-table">
+          <thead><tr><th>Component</th><th>Amount / month</th><th>Basis</th></tr></thead>
+          <tbody>
+            {% for c in salary.components %}
+            <tr><td>{{ c.label }}</td><td>₹{{ '{:,.2f}'.format(c.value) }}</td><td>{{ c.note }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <h3>Provident Fund (PF) Contribution</h3>
+        <table class="salary-table">
+          <tbody>
+            <tr><td>Employee ({{ salary.pf.rate }} of Basic)</td><td>₹{{ '{:,.2f}'.format(salary.pf.employee) }} / month</td></tr>
+            <tr><td>Employer ({{ salary.pf.rate }} of Basic)</td><td>₹{{ '{:,.2f}'.format(salary.pf.employer) }} / month</td></tr>
+          </tbody>
+        </table>
+
+        <h3>The Deductions</h3>
+        <table class="salary-table">
+          <tbody>
+            <tr><td>Professional Tax</td><td>₹{{ '{:,.2f}'.format(salary.professional_tax) }} / month</td></tr>
+          </tbody>
+        </table>
+        <p class="hint-text">Component values recalculate automatically whenever the wage amount changes; the sum of all components will not exceed the defined wage.</p>
+      </div>
+      {% endif %}
+
+      <div class="tab-panel" data-panel="security">
+        <div class="field-grid">
+          <div><label>Password</label><p>••••••••</p></div>
+          <div><label>Two-factor authentication</label><p>Not enabled</p></div>
+        </div>
+        {% if is_self %}
+          <a href="{{ url_for('change_password') }}" class="btn btn--outline">Change password</a>
+        {% else %}
+          <a href="{{ url_for('admin_change_password', emp_id=target.id) }}" class="btn btn--outline">Reset password</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  wireTabs('profileTabs');
+  {% if is_self %}wireCheckInOut();{% endif %}
+</script>
+{% endblock %}

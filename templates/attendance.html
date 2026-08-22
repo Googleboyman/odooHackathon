@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Attendance · Raven HR{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">{{ 'All employees' if is_admin else 'Your records' }}</p>
+      <h1>Attendance</h1>
+    </div>
+  </div>
+
+  {% if is_admin %}
+  <form class="search-row" method="GET" action="{{ url_for('attendance') }}">
+    <input type="hidden" name="date" value="{{ selected_date.isoformat() }}">
+    <input type="text" name="q" value="{{ query }}" placeholder="Search by employee name…">
+    <button type="submit" class="btn btn--outline">Search</button>
+  </form>
+
+  <div class="date-nav">
+    <a class="btn btn--outline btn--sm" href="{{ url_for('attendance', date=prev_date, q=query) }}">&larr;</a>
+    <a class="btn btn--outline btn--sm" href="{{ url_for('attendance', date=next_date, q=query) }}">&rarr;</a>
+    <span class="date-nav__label">{{ selected_date.strftime('%d, %B %Y') }}</span>
+  </div>
+
+  <section class="panel">
+    {% if records %}
+    <table class="salary-table">
+      <thead>
+        <tr><th>Employee</th><th>Check In</th><th>Check Out</th><th>Work Hours</th><th>Extra hours</th></tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td>{{ r.emp_name }}</td>
+          <td>{{ r.check_in }}</td>
+          <td>{{ r.check_out or '—' }}</td>
+          <td>{{ r.work_hours }}</td>
+          <td>{{ r.extra_hours }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">No one has checked in on {{ selected_date.strftime('%d %B %Y') }}{% if query %} matching "{{ query }}"{% endif %}.</p>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Physical Calendar</h2>
+    <form class="search-row calendar-emp-picker" method="GET" action="{{ url_for('attendance') }}">
+      <input type="hidden" name="cal_year" value="{{ cal_year }}">
+      <input type="hidden" name="cal_month" value="{{ cal_month }}">
+      <select name="emp_id" onchange="this.form.submit()">
+        {% for emp in employees %}
+        <option value="{{ emp.id }}" {% if emp.id == cal_emp_id %}selected{% endif %}>{{ emp.name }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn--outline">View</button>
+    </form>
+
+    {% if cal_emp_id %}
+    <div class="date-nav">
+      <a class="btn btn--outline btn--sm" href="{{ url_for('attendance', emp_id=cal_emp_id, cal_year=cal_prev_year, cal_month=cal_prev_month) }}">&larr;</a>
+      <a class="btn btn--outline btn--sm" href="{{ url_for('attendance', emp_id=cal_emp_id, cal_year=cal_next_year, cal_month=cal_next_month) }}">&rarr;</a>
+      <span class="date-nav__label">{{ cal_emp_name }} · {{ cal_month_label }}</span>
+    </div>
+    {% include "_attendance_calendar.html" %}
+    {% else %}
+    <p class="empty-state">No employees to show yet.</p>
+    {% endif %}
+  </section>
+
+  {% else %}
+
+  <div class="date-nav">
+    <a class="btn btn--outline btn--sm" href="{{ url_for('attendance', year=prev_year, month=prev_month) }}">&larr;</a>
+    <a class="btn btn--outline btn--sm" href="{{ url_for('attendance', year=next_year, month=next_month) }}">&rarr;</a>
+    <span class="date-nav__label">{{ month_label }}</span>
+  </div>
+  <div class="stat-chips">
+    <span class="stat-chip"><strong>{{ stats.present }}</strong> Count of days present</span>
+    <span class="stat-chip"><strong>{{ stats.leaves }}</strong> Leaves count</span>
+    <span class="stat-chip"><strong>{{ stats.working_days }}</strong> Total working days</span>
+  </div>
+
+  <section class="panel">
+    <h2>Physical Calendar</h2>
+    {% include "_attendance_calendar.html" %}
+  </section>
+
+  <section class="panel">
+    {% if records %}
+    <table class="salary-table">
+      <thead>
+        <tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Work Hours</th><th>Extra hours</th></tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td>{{ r.date }}</td>
+          <td>{{ r.check_in }}</td>
+          <td>{{ r.check_out or '—' }}</td>
+          <td>{{ r.work_hours }}</td>
+          <td>{{ r.extra_hours }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">No attendance recorded for {{ month_label }} yet.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

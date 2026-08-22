@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block title %}Time Off · Raven HR{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">{{ 'Approvals' if is_admin else 'Time off' }}</p>
+      <h1>Time Off</h1>
+    </div>
+    {% if not is_admin %}
+    <button class="btn btn--primary" id="newTimeOffBtn">+ New</button>
+    {% endif %}
+  </div>
+
+  <div class="tabs" id="timeOffTabs">
+    <button class="tab is-active" data-tab="requests">Time Off</button>
+    <button class="tab" data-tab="allocation">Allocation</button>
+  </div>
+
+  <div class="tab-panel is-active" data-panel="requests">
+    {% if not is_admin and balances %}
+    <div class="balance-row">
+      <div class="balance-chip">
+        <span class="balance-chip__label">Paid time Off</span>
+        <span class="balance-chip__value">{{ balances.paid }} Days Available</span>
+      </div>
+      <div class="balance-chip">
+        <span class="balance-chip__label">Sick time off</span>
+        <span class="balance-chip__value">{{ balances.sick }} Days Available</span>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if not is_admin and year_calendar %}
+    <section class="panel">
+      <div class="date-nav">
+        <a class="btn btn--outline btn--sm" href="{{ url_for('leave', year=cal_year - 1) }}">&larr;</a>
+        <a class="btn btn--outline btn--sm" href="{{ url_for('leave', year=cal_year + 1) }}">&rarr;</a>
+        <span class="date-nav__label">{{ cal_year }}</span>
+      </div>
+      <div class="yearcal-layout">
+        <div class="yearcal-grid">
+          {% for m in year_calendar %}
+          <div class="mini-month">
+            <h4 class="mini-month__title">{{ m.label }} {{ cal_year }}</h4>
+            <div class="mini-month__weekdays">
+              <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+            </div>
+            {% for week in m.weeks %}
+            <div class="mini-month__week">
+              {% for d in week %}
+              {% if d.in_month %}
+              <span class="mini-day mini-day--{{ d.status or 'none' }}{% if d.is_holiday %} mini-day--holiday{% endif %}{% if d.is_today %} mini-day--today{% endif %}"
+                    title="{{ d.date }}{% if d.holiday_name %} — {{ d.holiday_name }}{% endif %}{% if d.status %} — {{ d.status|replace('_',' ')|capitalize }}{% endif %}">{{ d.day }}</span>
+              {% else %}
+              <span class="mini-day mini-day--empty"></span>
+              {% endif %}
+              {% endfor %}
+            </div>
+            {% endfor %}
+          </div>
+          {% endfor %}
+        </div>
+
+        <aside class="yearcal-side">
+          <h4>Legend</h4>
+          <div class="legend legend--vertical">
+            <span><i class="legend-swatch legend-swatch--validated"></i> Validated</span>
+            <span><i class="legend-swatch legend-swatch--to_approve"></i> To Approve</span>
+            <span><i class="legend-swatch legend-swatch--refused"></i> Refused</span>
+          </div>
+
+          {% if holidays %}
+          <h4>Public Holidays</h4>
+          <ul class="holiday-list">
+            {% for h_date, h_name in holidays %}
+            <li><strong>{{ h_date }}</strong> : {{ h_name }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </aside>
+      </div>
+    </section>
+    {% endif %}
+
+    <section class="panel">
+      <h2>{{ 'All requests' if is_admin else 'Your requests' }}</h2>
+      {% if requests %}
+      <table class="salary-table">
+        <thead>
+          <tr>
+            {% if is_admin %}<th>Name</th>{% endif %}
+            <th>Start Date</th><th>End Date</th><th>Time off Type</th><th>Status</th>
+            {% if is_admin %}<th></th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in requests %}
+          <tr>
+            {% if is_admin %}<td>{{ r.name }}</td>{% endif %}
+            <td>{{ r.from }}</td>
+            <td>{{ r.to }}</td>
+            <td>{{ r.leave_type }}{% if r.attachment_path %} <a href="{{ url_for('static', filename=r.attachment_path) }}" target="_blank" class="attachment-link">📎</a>{% endif %}</td>
+            <td><span class="badge badge--{{ r.status }}">{{ r.status|capitalize }}</span></td>
+            {% if is_admin %}
+            <td class="leave-actions">
+              {% if r.status == 'pending' %}
+              <form method="POST" action="{{ url_for('leave_action', req_id=r.id, action='approve') }}"><button class="btn btn--outline btn--sm approve-btn">Approve</button></form>
+              <form method="POST" action="{{ url_for('leave_action', req_id=r.id, action='reject') }}"><button class="btn btn--ghost btn--sm reject-btn">Reject</button></form>
+              {% endif %}
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="empty-state">No time off requests yet.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="tab-panel" data-panel="allocation">
+    <section class="panel">
+      <h2>Leave allocation policy</h2>
+      {% if not is_admin and balances %}
+      <table class="salary-table">
+        <thead><tr><th>Time off Type</th><th>Allocated</th><th>Available</th></tr></thead>
+        <tbody>
+          <tr><td>Paid Time Off</td><td>24 Days / year</td><td>{{ balances.paid }} Days</td></tr>
+          <tr><td>Sick Leave</td><td>7 Days / year</td><td>{{ balances.sick }} Days</td></tr>
+          <tr><td>Unpaid Leaves</td><td>—</td><td>Unlimited (no pay for those days)</td></tr>
+        </tbody>
+      </table>
+      {% else %}
+      <table class="salary-table">
+        <thead><tr><th>Time off Type</th><th>Standard Allocation</th></tr></thead>
+        <tbody>
+          <tr><td>Paid Time Off</td><td>24 Days / year</td></tr>
+          <tr><td>Sick Leave</td><td>7 Days / year</td></tr>
+          <tr><td>Unpaid Leaves</td><td>Unlimited (no pay for those days)</td></tr>
+        </tbody>
+      </table>
+      {% endif %}
+      <p class="hint-text">Sick Leave requests require an attached certificate. Approving a request deducts the requested days from the matching balance; Unpaid Leaves don't draw from either balance.</p>
+    </section>
+  </div>
+</div>
+
+{% if not is_admin %}
+<div class="modal" id="timeOffModal">
+  <div class="modal__panel">
+    <div class="modal__head">
+      <h2>Time off Type Request</h2>
+      <button type="button" class="modal__close" id="closeTimeOffModal">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('leave') }}" enctype="multipart/form-data" class="modal-form">
+      <label>Employee <input type="text" value="{{ session.get('name') }}" disabled></label>
+
+      <label>Time off Type
+        <select name="leave_type" id="leaveTypeSelect">
+          {% for t in leave_types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+        </select>
+      </label>
+
+      <div class="modal-form__row">
+        <label>From <input type="date" name="from_date" id="fromDate" required></label>
+        <label>To <input type="date" name="to_date" id="toDate" required></label>
+      </div>
+
+      <label>Reason <input type="text" name="reason" placeholder="e.g. Family trip"></label>
+
+      <label id="attachmentField" class="attachment-field" style="display:none;">
+        Attachment <span class="attachment-field__hint">(for sick leave certificate)</span>
+        <input type="file" name="attachment" accept="image/*,.pdf">
+      </label>
+
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" id="discardTimeOffBtn">Discard</button>
+        <button type="submit" class="btn btn--primary">Submit</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  wireTabs('timeOffTabs');
+
+  {% if not is_admin %}
+  const newBtn = document.getElementById('newTimeOffBtn');
+  const modal = document.getElementById('timeOffModal');
+  const closeBtn = document.getElementById('closeTimeOffModal');
+  const discardBtn = document.getElementById('discardTimeOffBtn');
+  const leaveTypeSelect = document.getElementById('leaveTypeSelect');
+  const attachmentField = document.getElementById('attachmentField');
+
+  function openModal() { modal.classList.add('is-open'); }
+  function closeModal() { modal.classList.remove('is-open'); }
+
+  if (newBtn) newBtn.addEventListener('click', openModal);
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+  if (discardBtn) discardBtn.addEventListener('click', closeModal);
+  if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+  function toggleAttachment() {
+    attachmentField.style.display = (leaveTypeSelect.value === 'Sick Leave') ? 'flex' : 'none';
+  }
+  if (leaveTypeSelect) {
+    leaveTypeSelect.addEventListener('change', toggleAttachment);
+    toggleAttachment();
+  }
+  {% endif %}
+</script>
+{% endblock %}

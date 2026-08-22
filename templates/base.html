@@ -7,7 +7,33 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+  {% if session.get('user_id') %}
+  <nav class="topnav">
+    <a class="topnav__brand" href="{{ url_for('dashboard') }}">Raven HR</a>
+    <div class="topnav__links">
+      {% if session.get('role') == 'HR' %}
+        <a href="{{ url_for('admin_dashboard') }}">Employees</a>
+      {% else %}
+        <a href="{{ url_for('employee_dashboard') }}">Dashboard</a>
+      {% endif %}
+      <a href="{{ url_for('attendance') }}">Attendance</a>
+      <a href="{{ url_for('leave') }}">Time Off</a>
+    </div>
+    <div class="topnav__avatar" id="avatarMenu">
+      <button class="avatar-btn" id="avatarBtn" type="button">
+        {% if current_user_picture %}<img src="{{ url_for('static', filename=current_user_picture) }}" alt="">{% else %}{{ session.get('name','?')[0] }}{% endif %}
+      </button>
+      <div class="avatar-dropdown" id="avatarDropdown">
+        <a href="{{ url_for('profile') }}">My Profile</a>
+        <form method="POST" action="{{ url_for('logout') }}">
+          <button type="submit">Log Out</button>
+        </form>
+      </div>
+    </div>
+  </nav>
+  {% else %}
   <h1 class="page-title">Human Resource Management System</h1>
+  {% endif %}
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -18,5 +44,8 @@
   {% endwith %}
 
   {% block content %}{% endblock %}
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>

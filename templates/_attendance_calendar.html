@@ -1,0 +1,27 @@
+{# Physical Calendar grid: Present=green, Absent=red, Leave=yellow.
+   Expects: calendar_days, leading_blanks, cal_month_label in context. #}
+<div class="legend calendar-legend">
+  <span><i class="status-dot status-dot--present"></i> Present</span>
+  <span><i class="status-dot status-dot--absent"></i> Absent</span>
+  <span><i class="status-dot status-dot--leave"></i> Leave</span>
+  <span><i class="status-dot status-dot--weekend"></i> Weekend</span>
+  <span><i class="status-dot status-dot--future"></i> Upcoming</span>
+</div>
+
+<div class="calendar">
+  <div class="calendar__weekdays">
+    <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span>
+    <span>Thu</span><span>Fri</span><span>Sat</span>
+  </div>
+  <div class="calendar__grid">
+    {% for _ in range(leading_blanks) %}
+    <div class="calendar__day calendar__day--empty"></div>
+    {% endfor %}
+    {% for d in calendar_days %}
+    <div class="calendar__day calendar__day--{{ d.status }}"
+         title="{{ d.date }} — {{ d.status|capitalize }}{% if d.check_in %} · In {{ d.check_in }}{% endif %}{% if d.check_out %} · Out {{ d.check_out }}{% endif %}">
+      <span class="calendar__day-num">{{ d.day }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>

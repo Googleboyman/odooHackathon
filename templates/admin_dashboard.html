@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Employees · Raven HR{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">Admin / HR</p>
+      <h1>Employees</h1>
+    </div>
+    <a class="btn btn--primary" href="{{ url_for('new_employee') }}">+ New</a>
+  </div>
+
+  <form class="search-row" method="GET" action="{{ url_for('admin_dashboard') }}">
+    <input type="text" name="q" value="{{ query }}" placeholder="Search by name or department…">
+    <button type="submit" class="btn btn--outline">Search</button>
+  </form>
+
+  <div class="legend">
+    <span><span class="status-dot status-dot--present"></span> Present</span>
+    <span><span class="status-dot status-dot--leave">✈</span> On leave</span>
+    <span><span class="status-dot status-dot--absent"></span> Absent</span>
+  </div>
+
+  <section class="emp-grid">
+    {% for e in employees %}
+    <a class="emp-card" href="{{ url_for('profile', emp_id=e.id) }}">
+      <div class="emp-card__top">
+        <div class="emp-card__avatar">{{ e.name[0] }}</div>
+        <span class="status-dot status-dot--{{ e.status }}" title="{{ e.status|capitalize }}">
+          {% if e.status == 'leave' %}✈{% endif %}
+        </span>
+      </div>
+      <h3>{{ e.name }}</h3>
+      <p>{{ e.designation }}</p>
+      <p class="emp-card__dept">{{ e.department }}</p>
+    </a>
+    {% else %}
+    <p class="empty-state">No employees match "{{ query }}".</p>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

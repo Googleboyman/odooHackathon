@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Raven HR{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">Good to see you</p>
+      <h1>{{ user.name.split(' ')[0] }}'s Dashboard</h1>
+    </div>
+    <div class="checkinout" id="checkinout">
+      <div class="checkinout__status">
+        {% if user.checked_in %}
+          <span class="status-dot status-dot--present"></span> Checked in since {{ user.check_in_time }}
+        {% else %}
+          <span class="status-dot status-dot--absent"></span> Not checked in
+        {% endif %}
+      </div>
+      {% if user.checked_in %}
+      <button class="btn btn--outline" id="checkoutBtn">Check Out →</button>
+      {% else %}
+      <button class="btn btn--primary" id="checkinBtn">Check In →</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <section class="quick-cards">
+    <a href="{{ url_for('profile', emp_id=user.id) }}" class="quick-card">
+      <span class="quick-card__icon">◈</span>
+      <div>
+        <h3>Profile</h3>
+        <p>Personal info, salary &amp; security</p>
+      </div>
+    </a>
+    <a href="{{ url_for('attendance') }}" class="quick-card">
+      <span class="quick-card__icon">◷</span>
+      <div>
+        <h3>Attendance</h3>
+        <p>Your check-in / check-out history</p>
+      </div>
+    </a>
+    <a href="{{ url_for('leave') }}" class="quick-card">
+      <span class="quick-card__icon">✈</span>
+      <div>
+        <h3>Leave Requests</h3>
+        <p>{{ user.leave_balance }} days remaining · Apply for time off</p>
+      </div>
+    </a>
+    <form method="POST" action="{{ url_for('logout') }}" style="margin:0;">
+      <button type="submit" class="quick-card quick-card--muted" style="all:unset;cursor:pointer;display:flex;gap:14px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;width:100%;box-sizing:border-box;">
+        <span class="quick-card__icon">⏻</span>
+        <div>
+          <h3>Logout</h3>
+          <p>End your session</p>
+        </div>
+      </button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>Recent activity</h2>
+    {% if recent %}
+    <ul class="activity-list">
+      {% for r in recent %}
+      <li>
+        <span class="status-dot status-dot--present"></span>
+        Checked in at <strong>{{ r.check_in }}</strong> on {{ r.date }}
+        {% if r.check_out %} · checked out at <strong>{{ r.check_out }}</strong>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty-state">No activity yet — check in above to get started.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  wireCheckInOut();
+</script>
+{% endblock %}
