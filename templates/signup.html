@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Sign Up - HRMS{% endblock %}
+{% block content %}
+<div class="card wide">
+  <div class="logo-placeholder">App/Web Logo</div>
+
+  <form method="POST" action="{{ url_for('signup') }}" enctype="multipart/form-data">
+    <label for="company_name">Company Name :-</label>
+    <input type="text" id="company_name" name="company_name" value="{{ form.get('company_name', '') }}" required>
+
+    <label for="logo">Upload Logo</label>
+    <input type="file" id="logo" name="logo" accept="image/*">
+
+    <label for="name">Name :-</label>
+    <input type="text" id="name" name="name" placeholder="First Last" value="{{ form.get('name', '') }}" required>
+
+    <label for="email">Email :-</label>
+    <input type="email" id="email" name="email" value="{{ form.get('email', '') }}" required>
+
+    <label for="phone">Phone :-</label>
+    <input type="tel" id="phone" name="phone" value="{{ form.get('phone', '') }}" required>
+
+    <div class="password-row">
+      <label for="password">Password :-</label>
+      <input type="password" id="password" name="password" required>
+      <button type="button" class="toggle-visibility" onclick="togglePwd('password', this)">show</button>
+    </div>
+
+    <div class="password-row">
+      <label for="confirm_password">Confirm Password :-</label>
+      <input type="password" id="confirm_password" name="confirm_password" required>
+      <button type="button" class="toggle-visibility" onclick="togglePwd('confirm_password', this)">show</button>
+    </div>
+
+    <button type="submit" class="btn-primary">Sign Up</button>
+  </form>
+
+  <div class="switch-link">
+    Already have an account? <a href="{{ url_for('signin') }}">Sign In</a>
+  </div>
+
+  <div class="note-box">
+    Note: this registers your company and creates its first HR/Admin
+    account. Your Login ID will be generated automatically in the format
+    <code class="generated-id">[Company Code][Initials][Year][Serial]</code>
+    &mdash; e.g. <code class="generated-id">OIJODO20260001</code>.
+    Employee accounts can only be created by an HR/Admin from inside the
+    system, using the same automatic ID rule and a system-generated
+    temporary password.
+  </div>
+</div>
+
+<script>
+function togglePwd(id, btn) {
+  const el = document.getElementById(id);
+  if (el.type === "password") { el.type = "text"; btn.textContent = "hide"; }
+  else { el.type = "password"; btn.textContent = "show"; }
+}
+</script>
+{% endblock %}

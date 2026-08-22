@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Add Employee - HRMS{% endblock %}
+{% block content %}
+<div class="card">
+
+  {% if created %}
+    <div class="note-box" style="margin-top:0;">
+      Employee created successfully. Share these system-generated
+      credentials with them &mdash; they'll be required to set their own
+      password on first login.
+    </div>
+    <p>Login ID: <code class="generated-id">{{ created.login_id }}</code></p>
+    <p>Temporary Password: <code class="generated-id">{{ created.temp_password }}</code></p>
+    <p>Email: {{ created.email }}</p>
+    <a href="{{ url_for('new_employee') }}" class="switch-link" style="display:block;">Add another</a>
+  {% else %}
+    <form method="POST" action="{{ url_for('new_employee') }}">
+      <label for="first_name">First Name :-</label>
+      <input type="text" id="first_name" name="first_name" required>
+
+      <label for="last_name">Last Name :-</label>
+      <input type="text" id="last_name" name="last_name">
+
+      <label for="email">Email :-</label>
+      <input type="email" id="email" name="email" required>
+
+      <label for="phone">Phone :-</label>
+      <input type="tel" id="phone" name="phone">
+
+      <label for="role">Role :-</label>
+      <select id="role" name="role">
+        <option value="Employee">Employee</option>
+        <option value="HR">HR</option>
+      </select>
+
+      <button type="submit" class="btn-primary">Create Employee</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

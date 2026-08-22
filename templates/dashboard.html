@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - HRMS{% endblock %}
+{% block content %}
+<div class="card dashboard-box">
+  <p>Welcome, <strong>{{ name }}</strong></p>
+  <div class="badge">{{ login_id }}</div>
+  <div class="badge">{{ role }}</div>
+
+  {% if role == 'HR' %}
+    <p style="margin-top:24px;">
+      <a href="{{ url_for('new_employee') }}" style="color:var(--accent);">
+        + Add a new employee
+      </a>
+    </p>
+  {% endif %}
+
+  <form class="logout-form" method="POST" action="{{ url_for('logout') }}">
+    <button type="submit" class="logout-btn">Sign Out</button>
+  </form>
+</div>
+{% endblock %}
